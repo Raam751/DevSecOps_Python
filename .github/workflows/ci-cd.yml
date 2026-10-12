@@ -137,6 +137,9 @@ jobs:
     needs: push
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - uses: actions/checkout@v4
@@ -147,8 +150,22 @@ jobs:
       - name: Create namespace
         run: kubectl apply -f k8s/namespace.yaml
 
-      - name: Inject image tag into deployment
-        run: sed -i "s|__IMAGE_TAG__|${{ github.sha }}|g" k8s/deployment.yaml
+      - name: Create GHCR image pull secret
+        run: |
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --namespace=helphero
+
+      - name: Inject image tag and owner into deployment
+        run: |
+          sed -i "s|__IMAGE_TAG__|${{ github.sha }}|g" k8s/deployment.yaml
+          sed -i "s|__OWNER__|${GITHUB_REPOSITORY_OWNER,,}|g" k8s/deployment.yaml
+
+      - name: Add imagePullSecrets to deployment
+        run: |
+          sed -i 's/      containers:/      imagePullSecrets:\n      - name: ghcr-secret\n      containers:/g' k8s/deployment.yaml
 
       - name: Deploy to Kubernetes
         run: |
@@ -160,12 +177,12 @@ jobs:
           kubectl wait --for=condition=ready pod \
             -l app=helphero-backend \
             -n helphero \
-            --timeout=120s
+            --timeout=180s
 
       - name: Smoke test backend API
         run: |
           kubectl port-forward service/helphero-backend 8001:80 -n helphero &
-          sleep 3
+          sleep 5
           echo "Health check..."
           curl -sf http://localhost:8001/health
           echo ""

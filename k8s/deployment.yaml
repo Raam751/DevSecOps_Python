@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ramtichkule/helphero-backend:__IMAGE_TAG__
+          image: ghcr.io/__OWNER__/helphero-backend:__IMAGE_TAG__
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           env:
@@ -27,14 +28,14 @@ spec:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 10
+            initialDelaySeconds: 15
             periodSeconds: 5
-            failureThreshold: 6
+            failureThreshold: 10
           livenessProbe:
             httpGet:
               path: /health
               port: 8000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 30
             periodSeconds: 10
 ---
 apiVersion: apps/v1
@@ -56,6 +57,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ramtichkule/helphero-frontend:__IMAGE_TAG__
+          image: ghcr.io/__OWNER__/helphero-frontend:__IMAGE_TAG__
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
