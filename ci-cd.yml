@@ -37,8 +37,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build images
         run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/helphero-backend:${{ github.sha }} ./backend
-          docker build -t ghcr.io/${{ github.repository_owner }}/helphero-frontend:${{ github.sha }} ./frontend
+          docker build -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:${{ github.sha }} ./backend
+          docker build -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:${{ github.sha }} ./frontend
       - name: Scan backend
         uses: aquasecurity/trivy-action@0.30.0
         with:
@@ -55,8 +55,8 @@ jobs:
           exit-code: '1'
       - name: Push images
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/helphero-backend:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/helphero-frontend:${{ github.sha }}
+          docker push ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:${{ github.sha }}
+          docker push ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:${{ github.sha }}
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: build-scan-push
@@ -75,5 +75,5 @@ jobs:
           helm upgrade --install helphero ./helm/taskboard -n helphero --create-namespace \
             --set backend.tag=${{ github.sha }} \
             --set frontend.tag=${{ github.sha }} \
-            --set backend.image=ghcr.io/${{ github.repository_owner }}/helphero-backend \
-            --set frontend.image=ghcr.io/${{ github.repository_owner }}/helphero-frontend
+            --set backend.image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend \
+            --set frontend.image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend

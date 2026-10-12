@@ -45,10 +45,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build backend image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/helphero-backend:${{ github.sha }} ./backend
+        run: docker build -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:${{ github.sha }} ./backend
 
       - name: Build frontend image
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/helphero-frontend:${{ github.sha }} ./frontend
+        run: docker build -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:${{ github.sha }} ./frontend
 
   # ========================================
   # STEP 3 — Scan Docker Images with Trivy
@@ -61,10 +61,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Rebuild backend image for scan
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/helphero-backend:${{ github.sha }} ./backend
+        run: docker build -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:${{ github.sha }} ./backend
 
       - name: Rebuild frontend image for scan
-        run: docker build -t ghcr.io/${{ github.repository_owner }}/helphero-frontend:${{ github.sha }} ./frontend
+        run: docker build -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:${{ github.sha }} ./frontend
 
       - name: Install Trivy
         run: |
@@ -78,12 +78,12 @@ jobs:
       - name: Scan backend image
         run: |
           trivy image --severity HIGH,CRITICAL --ignore-unfixed \
-            ghcr.io/${{ github.repository_owner }}/helphero-backend:${{ github.sha }}
+            ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:${{ github.sha }}
 
       - name: Scan frontend image
         run: |
           trivy image --severity HIGH,CRITICAL --ignore-unfixed \
-            ghcr.io/${{ github.repository_owner }}/helphero-frontend:${{ github.sha }}
+            ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:${{ github.sha }}
 
   # ========================================
   # STEP 4 — Push Images to GHCR
@@ -92,6 +92,9 @@ jobs:
     name: Push Images to GHCR
     needs: image-scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -105,26 +108,26 @@ jobs:
       - name: Build and tag backend image
         run: |
           docker build \
-            -t ghcr.io/${{ github.repository_owner }}/helphero-backend:${{ github.sha }} \
-            -t ghcr.io/${{ github.repository_owner }}/helphero-backend:latest \
+            -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:${{ github.sha }} \
+            -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:latest \
             ./backend
 
       - name: Build and tag frontend image
         run: |
           docker build \
-            -t ghcr.io/${{ github.repository_owner }}/helphero-frontend:${{ github.sha }} \
-            -t ghcr.io/${{ github.repository_owner }}/helphero-frontend:latest \
+            -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:${{ github.sha }} \
+            -t ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:latest \
             ./frontend
 
       - name: Push backend image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/helphero-backend:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/helphero-backend:latest
+          docker push ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:${{ github.sha }}
+          docker push ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-backend:latest
 
       - name: Push frontend image
         run: |
-          docker push ghcr.io/${{ github.repository_owner }}/helphero-frontend:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/helphero-frontend:latest
+          docker push ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:${{ github.sha }}
+          docker push ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/helphero-frontend:latest
 
   # ========================================
   # STEP 5 — Deploy to Kubernetes (main only)
