@@ -2,9 +2,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: taskboard
-      POSTGRES_USER: taskboard
-      POSTGRES_PASSWORD: taskboard
+      POSTGRES_DB: helphero
+      POSTGRES_USER: helphero
+      POSTGRES_PASSWORD: helphero
     ports:
       - "5432:5432"
     volumes:
@@ -13,7 +13,7 @@ services:
   backend:
     build: ./backend
     environment:
-      DATABASE_URL: postgresql+psycopg://taskboard:taskboard@postgres:5432/taskboard
+      DATABASE_URL: postgresql+psycopg://helphero:helphero@postgres:5432/helphero
     depends_on:
       - postgres
     ports:
