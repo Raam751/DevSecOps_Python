@@ -1,6 +1,6 @@
 apiVersion: v1
 kind: Secret
-metadata: {name: taskboard-postgres}
+metadata: {name: helphero-postgres}
 type: Opaque
 stringData:
   username: {{ .Values.postgres.username | quote }}
@@ -8,19 +8,19 @@ stringData:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: taskboard-postgres}
+metadata: {name: helphero-postgres}
 spec:
-  selector: {app: taskboard-postgres}
+  selector: {app: helphero-postgres}
   ports: [{port: 5432, targetPort: 5432}]
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: taskboard-postgres}
+metadata: {name: helphero-postgres}
 spec:
   replicas: 1
-  selector: {matchLabels: {app: taskboard-postgres}}
+  selector: {matchLabels: {app: helphero-postgres}}
   template:
-    metadata: {labels: {app: taskboard-postgres}}
+    metadata: {labels: {app: helphero-postgres}}
     spec:
       containers:
       - name: postgres
@@ -28,15 +28,15 @@ spec:
         ports: [{containerPort: 5432}]
         env:
         - {name: POSTGRES_DB, value: "{{ .Values.postgres.database }}"}
-        - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: username}}}
-        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: taskboard-postgres, key: password}}}
+        - {name: POSTGRES_USER, valueFrom: {secretKeyRef: {name: helphero-postgres, key: username}}}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: helphero-postgres, key: password}}}
         readinessProbe: {exec: {command: ["sh","-c","pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]}, initialDelaySeconds: 5, periodSeconds: 10}
         volumeMounts: [{name: data, mountPath: /var/lib/postgresql/data}]
-      volumes: [{name: data, persistentVolumeClaim: {claimName: taskboard-postgres-data}}]
+      volumes: [{name: data, persistentVolumeClaim: {claimName: helphero-postgres-data}}]
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
-metadata: {name: taskboard-postgres-data}
+metadata: {name: helphero-postgres-data}
 spec:
   accessModes: [ReadWriteOnce]
   resources: {requests: {storage: 5Gi}}

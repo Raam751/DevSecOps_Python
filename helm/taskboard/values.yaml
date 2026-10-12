@@ -1,20 +1,20 @@
 frontend:
-  image: ghcr.io/YOUR_ORG/taskboard-frontend
+  image: ghcr.io/YOUR_ORG/helphero-frontend
   tag: latest
 backend:
-  image: ghcr.io/YOUR_ORG/taskboard-backend
+  image: ghcr.io/YOUR_ORG/helphero-backend
   tag: latest
 replicaCount: 2
-namespace: taskboard
+namespace: helphero
 imagePullSecrets: []
 postgres:
-  host: taskboard-postgres
-  database: taskboard
-  username: taskboard
-  password: taskboard
+  host: helphero-postgres
+  database: helphero
+  username: helphero
+  password: helphero
 ingress:
   enabled: false
-  host: taskboard.local
+  host: helphero.local
 hpa:
   enabled: true
   minReplicas: 2
