@@ -177,6 +177,22 @@ jobs:
             -l app=helphero-backend \
             -n helphero \
             --timeout=180s
+        continue-on-error: true
+
+      - name: Debug pod state on failure
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods -n helphero -o wide
+          echo "=== Describe backend pod ==="
+          kubectl describe pod -l app=helphero-backend -n helphero
+          echo "=== Backend pod logs ==="
+          kubectl logs -l app=helphero-backend -n helphero --previous 2>/dev/null || true
+          kubectl logs -l app=helphero-backend -n helphero 2>/dev/null || true
+          echo "=== Events ==="
+          kubectl get events -n helphero --sort-by=.lastTimestamp
+
+      - name: Fail if pod not ready
+        run: kubectl wait --for=condition=ready pod -l app=helphero-backend -n helphero --timeout=10s
 
       - name: Smoke test backend API
         run: |
