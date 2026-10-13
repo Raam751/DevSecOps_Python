@@ -147,25 +147,24 @@ jobs:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.10.0
 
+      - name: Build images for Kind
+        run: |
+          docker build -t helphero-backend:ci ./backend
+          docker build -t helphero-frontend:ci ./frontend
+
+      - name: Load images into Kind cluster
+        run: |
+          kind load docker-image helphero-backend:ci --name chart-testing
+          kind load docker-image helphero-frontend:ci --name chart-testing
+
       - name: Create namespace
         run: kubectl apply -f k8s/namespace.yaml
 
-      - name: Create GHCR image pull secret
+      - name: Patch deployment to use local CI images
         run: |
-          kubectl create secret docker-registry ghcr-secret \
-            --docker-server=ghcr.io \
-            --docker-username=${{ github.actor }} \
-            --docker-password=${{ secrets.GITHUB_TOKEN }} \
-            --namespace=helphero
-
-      - name: Inject image tag and owner into deployment
-        run: |
-          sed -i "s|__IMAGE_TAG__|${{ github.sha }}|g" k8s/deployment.yaml
-          sed -i "s|__OWNER__|${GITHUB_REPOSITORY_OWNER,,}|g" k8s/deployment.yaml
-
-      - name: Add imagePullSecrets to deployment
-        run: |
-          sed -i 's/      containers:/      imagePullSecrets:\n      - name: ghcr-secret\n      containers:/g' k8s/deployment.yaml
+          sed -i "s|ghcr.io/__OWNER__/helphero-backend:__IMAGE_TAG__|helphero-backend:ci|g" k8s/deployment.yaml
+          sed -i "s|ghcr.io/__OWNER__/helphero-frontend:__IMAGE_TAG__|helphero-frontend:ci|g" k8s/deployment.yaml
+          sed -i "s|imagePullPolicy: Always|imagePullPolicy: Never|g" k8s/deployment.yaml
 
       - name: Deploy to Kubernetes
         run: |
@@ -186,5 +185,5 @@ jobs:
           echo "Health check..."
           curl -sf http://localhost:8001/health
           echo ""
-          echo "Root endpoint..."
-          curl -sf http://localhost:8001/
+          echo "Tickets API..."
+          curl -sf http://localhost:8001/api/tickets
