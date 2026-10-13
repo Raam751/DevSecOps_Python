@@ -165,6 +165,8 @@ jobs:
           sed -i "s|ghcr.io/__OWNER__/helphero-backend:__IMAGE_TAG__|helphero-backend:ci|g" k8s/deployment.yaml
           sed -i "s|ghcr.io/__OWNER__/helphero-frontend:__IMAGE_TAG__|helphero-frontend:ci|g" k8s/deployment.yaml
           sed -i "s|imagePullPolicy: Always|imagePullPolicy: Never|g" k8s/deployment.yaml
+          # SQLite must be in /tmp since the non-root user (10001) cannot write to /app
+          sed -i "s|sqlite:///./helphero.db|sqlite:////tmp/helphero.db|g" k8s/deployment.yaml
 
       - name: Deploy to Kubernetes
         run: |
@@ -177,22 +179,6 @@ jobs:
             -l app=helphero-backend \
             -n helphero \
             --timeout=180s
-        continue-on-error: true
-
-      - name: Debug pod state on failure
-        run: |
-          echo "=== Pods ==="
-          kubectl get pods -n helphero -o wide
-          echo "=== Describe backend pod ==="
-          kubectl describe pod -l app=helphero-backend -n helphero
-          echo "=== Backend pod logs ==="
-          kubectl logs -l app=helphero-backend -n helphero --previous 2>/dev/null || true
-          kubectl logs -l app=helphero-backend -n helphero 2>/dev/null || true
-          echo "=== Events ==="
-          kubectl get events -n helphero --sort-by=.lastTimestamp
-
-      - name: Fail if pod not ready
-        run: kubectl wait --for=condition=ready pod -l app=helphero-backend -n helphero --timeout=10s
 
       - name: Smoke test backend API
         run: |
